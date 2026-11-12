@@ -1,0 +1,198 @@
+# Builds a GitHub release once, then publishes it to Modrinth (Fabric and NeoForge) and attaches
+# the jars to the GitHub release. Same shape as the Cobblemon Trainers workflow.
+#
+# Triggered by publishing a release on GitHub: its tag names the version, its body becomes the
+# changelog, and the pre-release checkbox picks between a stable and a beta release (alpha when
+# the tag says so).
+#
+# The tag is the single source of truth for the version: it is handed to Gradle as `-Pversion`.
+# `version` in gradle.properties is only the default a local build falls back on.
+#
+# CurseForge is not wired yet.
+
+name: release
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      - run: chmod +x ./gradlew
+
+      - name: resolve the release
+        id: release
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          version="${TAG#v}"
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.+-]+)?$ ]]; then
+            echo "::error::tag $TAG does not carry a version number (expected something like v1.2.3)"
+            exit 1
+          fi
+
+          if [ "$PRERELEASE" = "true" ]; then
+            case "$version" in
+              *alpha*) type=alpha ;;
+              *) type=beta ;;
+            esac
+          else
+            type=stable
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "type=$type" >> "$GITHUB_OUTPUT"
+          echo "Releasing $version as $type"
+
+      - name: build
+        run: ./gradlew build "-Pversion=${{ steps.release.outputs.version }}"
+
+      - name: stage release files
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          fabric="fabric/build/libs/cobblemon-battlephone-${VERSION}.jar"
+          neo="neoforge/build/libs/cobblemon-battlephone-neoforge-${VERSION}.jar"
+          python3 .github/scripts/verify-release.py "$fabric" "$VERSION"
+          python3 .github/scripts/verify-release.py "$neo" "$VERSION" neoforge
+          mkdir -p build/release
+          cp "$fabric" "$neo" build/release/
+          cd build/release
+          sha256sum "cobblemon-battlephone-${VERSION}.jar" "cobblemon-battlephone-neoforge-${VERSION}.jar" > SHA256SUMS
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-files
+          path: build/release/
+          if-no-files-found: error
+
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      type: ${{ steps.release.outputs.type }}
+
+  modrinth:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      - run: chmod +x ./gradlew
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+
+      # The plugin silently switches to dry-run when the token is absent.
+      - name: check Modrinth credentials
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: test -n "$MODRINTH_TOKEN" || { echo '::error::MODRINTH_TOKEN is empty'; exit 1; }
+
+      - name: publish Fabric to Modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CHANGELOG: ${{ github.event.release.body }}
+        run: |
+          ./gradlew :fabric:publishMods \
+            "-Pversion=${{ needs.build.outputs.version }}" \
+            "-Prelease_type=${{ needs.build.outputs.type }}" \
+            "-Prelease_file=build/release/cobblemon-battlephone-${{ needs.build.outputs.version }}.jar"
+
+      # Only when the repository has a MODRINTH.md: the project page then always matches the
+      # release that was just published. Last step, so a refused description never costs the
+      # release its versions.
+      - name: update the modrinth description
+        if: hashFiles('MODRINTH.md') != ''
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          project=$(sed -n 's/^modrinth_id=//p' gradle.properties)
+          [ -n "$project" ] || { echo "::error::modrinth_id is missing from gradle.properties"; exit 1; }
+
+          jq -Rs '{body: .}' MODRINTH.md > modrinth-body.json
+          code=$(curl -sS -o modrinth-response.txt -w '%{http_code}' \
+            -X PATCH "https://api.modrinth.com/v2/project/$project" \
+            -H "Authorization: $MODRINTH_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -H 'User-Agent: matheo-1712/cobblemon-battle-phone (release workflow)' \
+            --data @modrinth-body.json)
+
+          if [ "$code" != "204" ]; then
+            echo "::error::Modrinth refused the description update (HTTP $code)"
+            cat modrinth-response.txt
+            exit 1
+          fi
+          echo "description updated from MODRINTH.md"
+
+  modrinth-neoforge:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      - run: chmod +x ./gradlew
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+      - name: publish NeoForge to Modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CHANGELOG: ${{ github.event.release.body }}
+        run: |
+          test -n "$MODRINTH_TOKEN" || { echo '::error::MODRINTH_TOKEN is empty'; exit 1; }
+          ./gradlew :neoforge:publishMods \
+            "-Pversion=${{ needs.build.outputs.version }}" \
+            "-Prelease_type=${{ needs.build.outputs.type }}" \
+            "-Prelease_file=build/release/cobblemon-battlephone-neoforge-${{ needs.build.outputs.version }}.jar"
+
+  github-assets:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+      - name: attach the jars to the github release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          gh release upload "$TAG" \
+            "build/release/cobblemon-battlephone-${VERSION}.jar" \
+            "build/release/cobblemon-battlephone-neoforge-${VERSION}.jar" \
+            --clobber

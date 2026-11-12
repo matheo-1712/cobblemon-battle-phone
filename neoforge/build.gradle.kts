@@ -1,8 +1,10 @@
+import me.modmuss50.mpp.ReleaseType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("net.neoforged.moddev")
     id("org.jetbrains.kotlin.jvm")
+    id("me.modmuss50.mod-publish-plugin")
 }
 
 group = rootProject.group
@@ -50,3 +52,32 @@ tasks.processResources {
     }
 }
 tasks.jar { from(rootProject.file("LICENSE")) { rename { "${it}_${rootProject.name}" } } }
+
+// Same publication as the Fabric one, see the comments there.
+val modVersion = project.version.toString()
+val publishedVersion = "$modVersion-neoforge"
+publishMods {
+    file = providers.gradleProperty("release_file")
+        .map { rootProject.layout.projectDirectory.file(it) }
+        .orElse(tasks.jar.flatMap { it.archiveFile })
+    displayName = publishedVersion
+    version = publishedVersion
+    type = when (providers.gradleProperty("release_type").getOrElse("stable").lowercase()) {
+        "alpha" -> ReleaseType.ALPHA
+        "beta" -> ReleaseType.BETA
+        else -> ReleaseType.STABLE
+    }
+    modLoaders.add("neoforge")
+    changelog = providers.environmentVariable("CHANGELOG")
+        .orElse("See https://github.com/matheo-1712/cobblemon-battle-phone/releases/tag/v$modVersion")
+    dryRun = providers.environmentVariable("MODRINTH_TOKEN").orNull == null
+    modrinth {
+        accessToken = providers.environmentVariable("MODRINTH_TOKEN").orElse("dry-run")
+        projectId = providers.gradleProperty("modrinth_id")
+        minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
+        environment = CLIENT_AND_SERVER
+        requires { slug = "cobblemon"; version = providers.gradleProperty("cobblemon_neoforge_version") }
+        requires { slug = "kotlin-for-forge"; version = providers.gradleProperty("kotlin_neoforge_version") }
+        requires(providers.gradleProperty("cobblemon_trainers_project").get())
+    }
+}

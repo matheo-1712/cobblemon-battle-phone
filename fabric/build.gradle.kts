@@ -1,8 +1,11 @@
+import me.modmuss50.mpp.ReleaseType
+import net.fabricmc.loom.task.RemapJarTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
 	id("net.fabricmc.fabric-loom-remap")
 	id("org.jetbrains.kotlin.jvm")
+	id("me.modmuss50.mod-publish-plugin")
 }
 
 repositories {
@@ -139,4 +142,65 @@ tasks.jar {
 
 tasks.named<Jar>("sourcesJar") {
 	from(commonSources.named("main").map { it.allSource })
+}
+
+/**
+ * Release type, overridable from the command line so the release workflow drives the build
+ * without editing a tracked file: `./gradlew publishMods -Prelease_type=beta`.
+ */
+val releaseType = when (providers.gradleProperty("release_type").getOrElse("stable").lowercase()) {
+	"alpha" -> ReleaseType.ALPHA
+	"beta" -> ReleaseType.BETA
+	else -> ReleaseType.STABLE
+}
+
+// Captured out here on purpose: inside `publishMods`, `version` is the extension's own
+// property, and interpolating it yields its Gradle description rather than the number.
+val modVersion = project.version.toString()
+val publishedVersion = "$modVersion-fabric"
+
+publishMods {
+	// `remapJar`, not `jar`: the latter still carries named mappings and would crash outside a
+	// development environment. CI hands over the jar it already built and checksummed instead.
+	file = providers.gradleProperty("release_file")
+		.map { rootProject.layout.projectDirectory.file(it) }
+		.orElse(tasks.named<RemapJarTask>("remapJar").flatMap { it.archiveFile })
+	displayName = publishedVersion
+	version = publishedVersion
+	type = releaseType
+	modLoaders.add("fabric")
+
+	// The release workflow passes the GitHub release body here. Without it - a local run - the
+	// changelog is a pointer rather than a lie.
+	changelog = providers.environmentVariable("CHANGELOG")
+		.orElse("See https://github.com/matheo-1712/cobblemon-battle-phone/releases/tag/v$modVersion")
+
+	// A missing token turns the whole thing into a rehearsal written to build/mod-publish.
+	dryRun = providers.environmentVariable("MODRINTH_TOKEN").orNull == null
+
+	modrinth {
+		accessToken = providers.environmentVariable("MODRINTH_TOKEN").orElse("dry-run")
+		projectId = providers.gradleProperty("modrinth_id")
+		minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
+		// The phone has a server half (the listing, the calls) and a client half (the screen).
+		environment = CLIENT_AND_SERVER
+
+		// Pinned to the exact versions the mod is built against, like Cobblemon Trainers does.
+		requires {
+			slug = "cobblemon"
+			version = providers.gradleProperty("cobblemon_version")
+		}
+		requires {
+			slug = "fabric-api"
+			version = providers.gradleProperty("fabric_api_version")
+		}
+		requires {
+			slug = "fabric-language-kotlin"
+			version = providers.gradleProperty("fabric_kotlin_version")
+		}
+		// Not pinned: a pinned dependency makes launchers install that exact version, and this
+		// mod runs with any Cobblemon Trainers from 2.0.0-alpha on. The minimum is enforced by
+		// fabric.mod.json, where the loader reads it.
+		requires(providers.gradleProperty("cobblemon_trainers_project").get())
+	}
 }
