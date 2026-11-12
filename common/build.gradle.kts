@@ -11,8 +11,6 @@ version = rootProject.version
 
 repositories {
     mavenCentral()
-    // Cobblemon Trainers, published by `publishToMavenLocal` in its own repository.
-    mavenLocal { content { includeGroup("matheo1712.cobbletrainers") } }
     maven("https://api.modrinth.com/maven") {
         content { includeGroup("maven.modrinth") }
     }
@@ -28,7 +26,7 @@ dependencies {
     // Same reason as in Cobblemon Trainers: Cobblemon's class hierarchy names a Fabric API
     // interface, and the remapper needs it on the classpath to see through it.
     modCompileOnly("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
-    modCompileOnly("matheo1712.cobbletrainers:cobblemon-trainers-fabric:${providers.gradleProperty("cobblemon_trainers_version").get()}") {
+    modCompileOnly("maven.modrinth:${providers.gradleProperty("cobblemon_trainers_project").get()}:${providers.gradleProperty("cobblemon_trainers_version").get()}-fabric") {
         isTransitive = false
     }
     compileOnly("net.fabricmc:sponge-mixin:${providers.gradleProperty("mixin_version").get()}")

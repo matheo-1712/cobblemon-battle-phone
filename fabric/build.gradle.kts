@@ -6,7 +6,6 @@ plugins {
 }
 
 repositories {
-	mavenLocal { content { includeGroup("matheo1712.cobbletrainers") } }
 	maven {
 		name = "Modrinth"
 		url = uri("https://api.modrinth.com/maven")
@@ -63,7 +62,7 @@ dependencies {
 	modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
 	modImplementation("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
 	// The mod this one is built on. Also what the dev game runs it next to.
-	modImplementation("matheo1712.cobbletrainers:cobblemon-trainers-fabric:$cobblemonTrainersVersion") {
+	modImplementation("maven.modrinth:${project.property("cobblemon_trainers_project")}:$cobblemonTrainersVersion-fabric") {
 		isTransitive = false
 	}
 	cobblemonArchive("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")

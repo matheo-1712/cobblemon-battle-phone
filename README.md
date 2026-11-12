@@ -17,7 +17,7 @@ son écran et ce qui l'alimente.
 | Fabric Loader ou NeoForge | Fabric ≥ 0.19.5 ; NeoForge ≥ 21.1.251 |
 | Java | 21 |
 | Cobblemon | ≥ 1.8.0 |
-| Cobblemon Trainers | ≥ 1.1.4 |
+| Cobblemon Trainers | ≥ 2.0.0-alpha (la première version sans le téléphone) |
 | Fabric API et Fabric Language Kotlin | requis avec Fabric |
 | Kotlin for Forge | requis avec NeoForge (≥ 5.12.0) |
 
@@ -84,20 +84,14 @@ dans le dresseur - voir
 
 ## Développement
 
-Le mod compile contre les jars publiés de Cobblemon Trainers. Tant qu'ils ne sont pas sur un
-Maven public, ils se prennent en Maven local :
+Le mod compile contre Cobblemon Trainers tel qu'il est publié sur Modrinth, via le Maven
+Modrinth : rien à installer à côté.
 
 ```bash
-# dans le dépôt cobblemon-trainers
-./gradlew :fabric:publishToMavenLocal :neoforge:publishToMavenLocal
-```
-
-```bash
-# ici
 ./gradlew build
 ```
 
-La version attendue est `cobblemon_trainers_version` dans `gradle.properties`. Sur Windows,
+La version visée est `cobblemon_trainers_version` dans `gradle.properties`. Sur Windows,
 utiliser `.\gradlew.bat`.
 
 ## Licence

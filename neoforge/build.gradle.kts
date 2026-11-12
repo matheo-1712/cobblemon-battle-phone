@@ -11,7 +11,6 @@ base { archivesName.set("${rootProject.name}-neoforge") }
 
 repositories {
     mavenCentral()
-    mavenLocal { content { includeGroup("matheo1712.cobbletrainers") } }
     maven("https://api.modrinth.com/maven") { content { includeGroup("maven.modrinth") } }
 }
 
@@ -35,7 +34,7 @@ val cobblemonTrainersVersion = providers.gradleProperty("cobblemon_trainers_vers
 dependencies {
     implementation("maven.modrinth:cobblemon:${providers.gradleProperty("cobblemon_neoforge_version").get()}")
     implementation("maven.modrinth:kotlin-for-forge:${providers.gradleProperty("kotlin_neoforge_version").get()}")
-    implementation("matheo1712.cobbletrainers:cobblemon-trainers-neoforge:$cobblemonTrainersVersion") {
+    implementation("maven.modrinth:${providers.gradleProperty("cobblemon_trainers_project").get()}:$cobblemonTrainersVersion-neoforge") {
         isTransitive = false
     }
 }

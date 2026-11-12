@@ -20,10 +20,6 @@ Deux clés restent lues chez Cobblemon Trainers via `CobblemonTrainers.lang` :
 ## Commandes
 
 ```bash
-# d'abord, dans le dépôt cobblemon-trainers (à côté de celui-ci)
-./gradlew :fabric:publishToMavenLocal :neoforge:publishToMavenLocal
-
-# puis ici
 ./gradlew build          # compile, teste, produit fabric/build/libs et neoforge/build/libs
 ./gradlew runClient      # client de dev Fabric, avec Cobblemon Trainers chargé à côté
 ```
@@ -66,9 +62,17 @@ aussi.
 
 ### La dépendance à Cobblemon Trainers
 
-- **Elle est prise en Maven local**, `matheo1712.cobbletrainers:cobblemon-trainers-fabric` et
-  `-neoforge`, à la version `cobblemon_trainers_version` de `gradle.properties`. Changer d'API
-  veut dire republier là-bas avant de construire ici.
+- **Elle est prise sur le Maven Modrinth**,
+  `maven.modrinth:cobblemon-trainers-rerebleue:<version>-fabric` et `-neoforge` : les numéros de
+  version Modrinth de Cobblemon Trainers portent leur loader en suffixe, et
+  `cobblemon_trainers_version` est la partie commune. On vise donc ce qui est réellement publié -
+  un changement d'API ne se voit ici qu'après une release là-bas. Pour essayer une API pas encore
+  publiée, un `publishToMavenLocal` là-bas et un `mavenLocal()` ici, le temps de l'essai.
+- **`cobblemon_trainers_version` est aussi la version minimale déclarée** dans
+  `fabric.mod.json` et `neoforge.mods.toml`, et elle garde son étiquette de pré-version :
+  en semver, `2.0.0-alpha` vient *avant* `2.0.0`, donc `>=2.0.0` refuserait l'alpha. Rien en
+  dessous de `2.0.0-alpha`, la première sans le téléphone : à côté d'une plus ancienne, les deux
+  enregistreraient les objets `battle_phone` et le jeu ne démarrerait pas.
 - **`common` compile contre le jar Fabric**, remappé en noms Mojang par Loom
   (`modCompileOnly`) ; NeoForge recompile les mêmes sources contre le jar NeoForge. Un
   `modCompileOnly` n'atteint pas le classpath des tests : le jar remappé y est repris du
