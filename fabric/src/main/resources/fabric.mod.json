@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "cobblemon_battlephone",
+	"version": "${version}",
+	"name": "Cobblemon BattlePhone",
+	"description": "Suit les dresseurs de Cobblemon Trainers : qui reste à battre, leur équipe, leurs récompenses, et les appeler.",
+	"authors": [
+		"matheo1712"
+	],
+	"contact": {},
+	"license": "CC0-1.0",
+	"icon": "assets/cobblemon_battlephone/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "matheo1712.battlephone.fabric.BattlePhoneFabric",
+				"adapter": "kotlin"
+			}
+		],
+		"client": [
+			{
+				"value": "matheo1712.battlephone.fabric.BattlePhoneFabricClient",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*",
+		"cobblemon": ">=1.8.0",
+		"cobblemon-trainers": ">=${cobblemon_trainers_version}"
+	}
+}

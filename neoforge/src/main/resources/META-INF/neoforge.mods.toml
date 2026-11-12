@@ -1,0 +1,46 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="CC0-1.0"
+
+[[mods]]
+modId="cobblemon_battlephone"
+version="${version}"
+displayName="Cobblemon BattlePhone"
+description='''Tracks the trainers of Cobblemon Trainers: who is left to beat, their team, their rewards, and calling them.'''
+logoFile="assets/cobblemon_battlephone/icon.png"
+
+[[dependencies.cobblemon_battlephone]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.251,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.cobblemon_battlephone]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.cobblemon_battlephone]]
+modId="cobblemon"
+type="required"
+versionRange="[1.8.1,1.9)"
+ordering="AFTER"
+side="BOTH"
+
+# After it within every RegisterEvent pass: see BattlePhoneNeoForge.
+[[dependencies.cobblemon_battlephone]]
+modId="cobblemon_trainers"
+type="required"
+versionRange="[${cobblemon_trainers_version},)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.cobblemon_battlephone]]
+modId="kotlinforforge"
+type="required"
+versionRange="[5.12,)"
+ordering="BEFORE"
+side="BOTH"
