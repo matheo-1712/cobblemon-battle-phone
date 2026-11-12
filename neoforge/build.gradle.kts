@@ -32,6 +32,7 @@ neoForge {
 }
 
 val cobblemonTrainersVersion = providers.gradleProperty("cobblemon_trainers_version").get()
+val cobblemonTrainersMinVersion = providers.gradleProperty("cobblemon_trainers_min_version").get()
 
 dependencies {
     implementation("maven.modrinth:cobblemon:${providers.gradleProperty("cobblemon_neoforge_version").get()}")
@@ -46,9 +47,9 @@ kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_21 } }
 tasks.withType<JavaCompile>().configureEach { options.release = 21 }
 tasks.processResources {
     inputs.property("version", project.version)
-    inputs.property("cobblemonTrainersVersion", cobblemonTrainersVersion)
+    inputs.property("cobblemonTrainersMinVersion", cobblemonTrainersMinVersion)
     filesMatching("META-INF/neoforge.mods.toml") {
-        expand("version" to project.version, "cobblemon_trainers_version" to cobblemonTrainersVersion)
+        expand("version" to project.version, "cobblemon_trainers_min_version" to cobblemonTrainersMinVersion)
     }
 }
 tasks.jar { from(rootProject.file("LICENSE")) { rename { "${it}_${rootProject.name}" } } }

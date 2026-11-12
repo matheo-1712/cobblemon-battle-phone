@@ -17,7 +17,7 @@ son écran et ce qui l'alimente.
 | Fabric Loader ou NeoForge | Fabric ≥ 0.19.5 ; NeoForge ≥ 21.1.251 |
 | Java | 21 |
 | Cobblemon | ≥ 1.8.0 |
-| Cobblemon Trainers | ≥ 2.0.0-alpha (la première version sans le téléphone) |
+| Cobblemon Trainers | ≥ 2.0.0 (les alphas de 2.0.0 sont refusées) |
 | Fabric API et Fabric Language Kotlin | requis avec Fabric |
 | Kotlin for Forge | requis avec NeoForge (≥ 5.12.0) |
 
@@ -91,7 +91,8 @@ Modrinth : rien à installer à côté.
 ./gradlew build
 ```
 
-La version visée est `cobblemon_trainers_version` dans `gradle.properties`. Sur Windows,
+La version compilée est `cobblemon_trainers_version` dans `gradle.properties`, la version minimale
+déclarée aux joueurs `cobblemon_trainers_min_version`. Sur Windows,
 utiliser `.\gradlew.bat`.
 
 ## Licence

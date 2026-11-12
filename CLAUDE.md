@@ -68,11 +68,14 @@ aussi.
   `cobblemon_trainers_version` est la partie commune. On vise donc ce qui est réellement publié -
   un changement d'API ne se voit ici qu'après une release là-bas. Pour essayer une API pas encore
   publiée, un `publishToMavenLocal` là-bas et un `mavenLocal()` ici, le temps de l'essai.
-- **`cobblemon_trainers_version` est aussi la version minimale déclarée** dans
-  `fabric.mod.json` et `neoforge.mods.toml`, et elle garde son étiquette de pré-version :
-  en semver, `2.0.0-alpha` vient *avant* `2.0.0`, donc `>=2.0.0` refuserait l'alpha. Rien en
-  dessous de `2.0.0-alpha`, la première sans le téléphone : à côté d'une plus ancienne, les deux
-  enregistreraient les objets `battle_phone` et le jeu ne démarrerait pas.
+- **La version minimale déclarée est un réglage à part, `cobblemon_trainers_min_version`**,
+  lu par `fabric.mod.json` et `neoforge.mods.toml`. Les deux ne répondent pas à la même
+  question : `cobblemon_trainers_version` est ce que Gradle peut télécharger - donc une version
+  réellement publiée, alpha comprise -, le minimum est ce qu'un joueur a le droit de faire
+  tourner. Il vaut `2.0.0`, sans étiquette : en semver `2.0.0-alpha` vient *avant* `2.0.0`, donc
+  les alphas sont refusées, et c'est voulu. Rien en dessous non plus : à côté d'une version qui
+  contient encore le téléphone, les deux enregistreraient les objets `battle_phone` et le jeu ne
+  démarrerait pas.
 - **`common` compile contre le jar Fabric**, remappé en noms Mojang par Loom
   (`modCompileOnly`) ; NeoForge recompile les mêmes sources contre le jar NeoForge. Un
   `modCompileOnly` n'atteint pas le classpath des tests : le jar remappé y est repris du

@@ -32,6 +32,6 @@
 		"fabric-api": "*",
 		"fabric-language-kotlin": "*",
 		"cobblemon": ">=1.8.0",
-		"cobblemon-trainers": ">=${cobblemon_trainers_version}"
+		"cobblemon-trainers": ">=${cobblemon_trainers_min_version}"
 	}
 }

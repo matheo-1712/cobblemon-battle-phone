@@ -54,6 +54,7 @@ loom {
 configurations.named("compileOnly") { extendsFrom(commonBundle) }
 
 val cobblemonTrainersVersion = providers.gradleProperty("cobblemon_trainers_version").get()
+val cobblemonTrainersMinVersion = providers.gradleProperty("cobblemon_trainers_min_version").get()
 
 dependencies {
 	commonBundle(project(path = ":common", configuration = "namedElements"))
@@ -101,10 +102,10 @@ dependencies {
 tasks.processResources {
 	val version = version
 	inputs.property("version", version)
-	inputs.property("cobblemonTrainersVersion", cobblemonTrainersVersion)
+	inputs.property("cobblemonTrainersMinVersion", cobblemonTrainersMinVersion)
 
 	filesMatching("fabric.mod.json") {
-		expand("version" to version, "cobblemon_trainers_version" to cobblemonTrainersVersion)
+		expand("version" to version, "cobblemon_trainers_min_version" to cobblemonTrainersMinVersion)
 	}
 }
 
@@ -199,7 +200,7 @@ publishMods {
 			version = providers.gradleProperty("fabric_kotlin_version")
 		}
 		// Not pinned: a pinned dependency makes launchers install that exact version, and this
-		// mod runs with any Cobblemon Trainers from 2.0.0-alpha on. The minimum is enforced by
+		// mod runs with any Cobblemon Trainers from 2.0.0 on. The minimum is enforced by
 		// fabric.mod.json, where the loader reads it.
 		requires(providers.gradleProperty("cobblemon_trainers_project").get())
 	}
